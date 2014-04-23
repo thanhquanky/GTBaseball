@@ -1,0 +1,16 @@
+<ion-view title="Vote" ng-init="init()">
+  <ion-nav-buttons side="left">
+    <button menu-toggle="left"class="button button-icon icon ion-navicon"></button>
+  </ion-nav-buttons>
+  <ion-content class="has-header">
+   <ion-list show-delete="data.showDelete" show-reorder="data.showReorder">
+    <ion-item ng-repeat="player in roster" item="item" href="#/app/player/{{player.number}}" option-buttons="optionButtons">
+        {{player.name}}
+        <ion-delete-button class="ion-minus-circled" ng-click="onItemDelete(item)">&nbsp;</ion-delete-button>
+        <ion-option-button class="button-positive" ng-click="vote(player)">
+            Vote
+            <i class="icon ion-ios7-heart"></i>
+        </ion-option-button>
+    </ion-item>
+  </ion-content>
+</ion-view>

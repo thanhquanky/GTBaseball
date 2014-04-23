@@ -1,0 +1,31 @@
+{
+  "project": {
+    "projectSettingsVersion": "1.0",
+    "creationData": {
+      "type": "Import",
+      "src": "/home/worm/Desktop/GT/VIP/GTBaseball/www",
+      "projectGuid": "6ea49d4d-ad0f-428c-9978-2f5eb9d941bf",
+      "lastModifiedDate": 1398197156898,
+      "creationDate": 1398197156853
+    },
+    "projectFiles": {},
+    "projectDirectories": {},
+    "libraries": [
+      {
+        "name": "Cordova",
+        "version": "2.9.0",
+        "data": {
+          "default": true
+        }
+      },
+      {
+        "name": "intelXDK",
+        "version": "4.0.0",
+        "data": {
+          "default": true
+        }
+      }
+    ],
+    "services": []
+  }
+}
