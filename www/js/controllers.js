@@ -1,20 +1,25 @@
 angular.module('starter.controllers', [])
 
-.controller('AppCtrl', function($scope) {
-})
-
-.controller('PlaylistsCtrl', function($scope) {
-  $scope.playlists = [
-    { title: 'Reggae', id: 1 },
-    { title: 'Chill', id: 2 },
-    { title: 'Dubstep', id: 3 },
-    { title: 'Indie', id: 4 },
-    { title: 'Rap', id: 5 },
-    { title: 'Cowbell', id: 6 }
-  ];
-})
-
-.controller('PlaylistCtrl', function($scope, $stateParams) {
+.controller('AppCtrl', function($scope, AUTH_EVENTS, Session) {
+    $scope.user = {};
+    
+    $scope.init = function() {
+        $scope.user = {
+            'name'      : Session.name,
+            'user_id'   : Session.user_id,
+            'email'     : Session.email
+        };
+        console.log('appctrl init');
+        console.log('name: ' + $scope.user.name);
+    }
+    
+    $scope.$on(AUTH_EVENTS.loginSuccess, function(event) {
+        $scope.user = {
+            'name'      : Session.name,
+            'user_id'   : Session.user_id,
+            'email'     : Session.email
+        };
+    })
 })
 
 .controller('RosterCtrl', function($scope, $stateParams, $rootScope, Roster) {
@@ -54,9 +59,14 @@ angular.module('starter.controllers', [])
     }
 })
 
-.controller('VoteCtrl', function($scope, $stateParams, $rootScope, Roster) {
+.controller('VoteCtrl', function($scope, $stateParams, $http, $rootScope, Roster, Session, $location) {
+    if (!Session.token) {
+        console.log("Unauthorized!!!!");
+        $location.path('/app/login');
+    }
     $scope.init = function() {
         // load roster
+        
         var promise = Roster.get();
         console.log("Wait for promise");
         promise.then(
@@ -68,6 +78,19 @@ angular.module('starter.controllers', [])
                 console.log(reason);
             }
         );
+    }
+    
+    $scope.vote = function(player) {
+        $scope.my_vote = {
+            'player_id'     :       player.player_id,
+            'user_id'       :       Session.user_id,
+            'game_id'       :       1
+        }
+        $http
+            .post('http://thanh.vip.gatech.edu/GTBaseballServ/index.php/vote', $scope.my_vote)
+            .then(function() {
+                console.log('You have voted for ' + player.name);
+            });
     }
 
     $scope.optionButtons = [
@@ -101,17 +124,44 @@ angular.module('starter.controllers', [])
     }
 })
 
-.controller('LoginCtrl', function ($scope, $rootScope, AUTH_EVENTS, AuthService) {
-  $scope.credentials = {
-    username: '',
-    password: ''
-  };
-  $scope.login = function (credentials) {
-    AuthService.login(credentials).then(function () {
-      $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
-    }, function () {
-      $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
-    });
-  };
+.controller('LoginCtrl', function ($scope, $rootScope, AUTH_EVENTS, AuthService, $location) {
+    $scope.credentials = {};
+    $scope.login = function () {
+        AuthService.login($scope.credentials).then(function () {
+          $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
+            $location.path('/app/roster');
+        }, function () {
+          $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
+        });
+    };
+
+    $scope.register = function () {
+        console.log($scope.credentials.email);
+        AuthService.register($scope.credentials).then(function() {
+           $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
+            $location.path('/app/roster');
+        }, function () {
+          $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
+            console.log('register failed');
+        }); 
+    };
 })
 
+.controller('ScheduleCtrl', function($scope, $rootScope, GameService) {
+    $scope.init = function() {
+        // load roster
+        
+        var promise = GameService.get_all();
+        console.log("Wait for promise");
+        promise.then(
+            function(games) {
+                $scope.games = games;
+                $rootScope.games = games;
+            },
+            function(reason) {
+                console.log(reason);
+            }
+        );
+    }
+    
+})

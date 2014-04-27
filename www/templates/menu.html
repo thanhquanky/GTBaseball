@@ -7,12 +7,18 @@
     <ion-nav-view name="menuContent" animation="slide-left-right"></ion-nav-view>
   </ion-pane>
 
-  <ion-side-menu side="left">
+  <ion-side-menu side="left" ng-init="init()">
     <header class="bar bar-header bar-energized">
       <h1 class="title">Menu</h1>
     </header>
     <ion-content class="has-header">
       <ion-list>
+        <ion-item nav-clear menu-close href="#/app/login" ng-hide="Session.name === null">
+          Login
+        </ion-item>
+        <ion-item nav-clear menu-close href="#/app/login" ng-show="Session.name === null">
+          Hi, {{Session.name}}
+        </ion-item>
         <ion-item nav-clear menu-close href="#/app/roster">
           Roster
         </ion-item>

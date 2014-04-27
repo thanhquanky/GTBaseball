@@ -4,7 +4,8 @@
   </ion-nav-buttons>
   <ion-content class="has-header">
    <ion-list show-delete="data.showDelete" show-reorder="data.showReorder">
-    <ion-item ng-repeat="player in roster" item="item" href="#/app/player/{{player.number}}" option-buttons="optionButtons">
+       <!--href="#/app/player/{{player.number}}"-->
+    <ion-item ng-repeat="player in roster" item="item" option-buttons="optionButtons">
         {{player.name}}
         <ion-delete-button class="ion-minus-circled" ng-click="onItemDelete(item)">&nbsp;</ion-delete-button>
         <ion-option-button class="button-positive" ng-click="vote(player)">

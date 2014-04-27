@@ -6,16 +6,48 @@
 // 'starter.controllers' is found in controllers.js
 angular.module('starter', ['ionic', 'starter.controllers'])
 
-.run(function($ionicPlatform) {
-  $ionicPlatform.ready(function() {
-    if(window.StatusBar) {
-      // org.apache.cordova.statusbar required
-      StatusBar.styleDefault();
+.config(function($stateProvider, $urlRouterProvider, $httpProvider) {
+    $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
+    /**
+   * The workhorse; converts an object to x-www-form-urlencoded serialization.
+   * @param {Object} obj
+   * @return {String}
+   */ 
+  var param = function(obj) {
+    var query = '', name, value, fullSubName, subName, subValue, innerObj, i;
+      
+    for(name in obj) {
+      value = obj[name];
+        
+      if(value instanceof Array) {
+        for(i=0; i<value.length; ++i) {
+          subValue = value[i];
+          fullSubName = name + '[' + i + ']';
+          innerObj = {};
+          innerObj[fullSubName] = subValue;
+          query += param(innerObj) + '&';
+        }
+      }
+      else if(value instanceof Object) {
+        for(subName in value) {
+          subValue = value[subName];
+          fullSubName = name + '[' + subName + ']';
+          innerObj = {};
+          innerObj[fullSubName] = subValue;
+          query += param(innerObj) + '&';
+        }
+      }
+      else if(value !== undefined && value !== null)
+        query += encodeURIComponent(name) + '=' + encodeURIComponent(value) + '&';
     }
-  });
-})
-
-.config(function($stateProvider, $urlRouterProvider) {
+      
+    return query.length ? query.substr(0, query.length - 1) : query;
+  };
+ 
+  // Override $http service's default transformRequest
+  $httpProvider.defaults.transformRequest = [function(data) {
+    return angular.isObject(data) && String(data) !== '[object File]' ? param(data) : data;
+  }];
   $stateProvider
 
     .state('app', {
@@ -90,6 +122,15 @@ angular.module('starter', ['ionic', 'starter.controllers'])
             }
         }
     })
+    .state('app.schedule', {
+        url: '/schedule',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/schedule.html',
+                controller: 'ScheduleCtrl'
+            }
+        }
+    })
   // if none of the above states are matched, use this as the fallback
   $urlRouterProvider.otherwise('/app/login');
 })
@@ -123,33 +164,67 @@ angular.module('starter', ['ionic', 'starter.controllers'])
   return {
     login: function (credentials) {
       return $http
-        .post('/login', credentials)
+        .post('http://thanh.vip.gatech.edu/GTBaseballServ/index.php/auth/login', credentials)
         .then(function (res) {
-          Session.create(res.id, res.userid, res.role);
+          Session.create(res.user_id, res.email, res.name, res.token);
         });
     },
-    isAuthenticated: function () {
-      return !!Session.userId;
+    register: function (credentials) {
+      return $http.post('http://thanh.vip.gatech.edu/GTBaseballServ/index.php/auth/register', credentials)
+        .then(function(res) {
+            Session.create(res.user_id, res.email, res.name, res.token);
+        })
     },
-    isAuthorized: function (authorizedRoles) {
-      if (!angular.isArray(authorizedRoles)) {
-        authorizedRoles = [authorizedRoles];
-      }
-      return (this.isAuthenticated() &&
-        authorizedRoles.indexOf(Session.userRole) !== -1);
+    isAuthenticated: function () {
+      return !!Session.token;
     }
   };
 })
 
-.service('Session', function () {
-  this.create = function (sessionId, userId, userRole) {
-    this.id = sessionId;
-    this.userId = userId;
-  };
-  this.destroy = function () {
-    this.id = null;
-    this.userId = null;
-  };
-  return this;
+
+.service('GameService', function($http, $q) {
+    this.get_all = function() {
+        var deferred = $q.defer();
+        var url = 'http://thanh.vip.gatech.edu/GTBaseballServ/index.php/game';
+        $http.get(url)
+            .success(function(data) {
+                deferred.resolve(data);
+            })
+            .error(function(data, status, headers, config) {
+                // retrying 
+                deferred.reject(data);
+            })
+        return deferred.promise;
+    };
 })
 
+
+.service('Session', function () {
+    this.create = function (user_id, email, name, token) {
+        this.user_id = user_id;
+        this.email = email;
+        this.name = name;
+        this.token = token;
+    };
+    this.destroy = function () {
+        this.user_id = null;
+        this.email = null;
+        this.name = null;
+        this.token = null;
+    };
+    return this;
+})
+
+.run(function($ionicPlatform, GameService, $rootScope) {
+  $ionicPlatform.ready(function() {
+    if(window.StatusBar) {
+      // org.apache.cordova.statusbar required
+      StatusBar.styleDefault();
+    }
+  });
+    
+    GameService.get_all().then(function(games) {
+        $rootScope.games = games;
+        $rootScope.$broadcast('gameslist_loaded', games);
+    });    
+})
